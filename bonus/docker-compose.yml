@@ -1,0 +1,19 @@
+services:
+  jenkins:
+    build:
+      context: ..
+      dockerfile: bonus/Dockerfile
+    container_name: my_marvin
+    ports:
+      - "3333:8080"
+      - "50000:50000"
+    environment:
+      - USER_CHOCOLATEEN_PASSWORD=chocolateen_pwd
+      - USER_VAUGIE_G_PASSWORD=vaugie_g_pwd
+      - USER_I_DONT_KNOW_PASSWORD=i_dont_know_pwd
+      - USER_NASSO_PASSWORD=nasso_pwd
+    volumes:
+      - jenkins_data:/var/jenkins_home
+
+volumes:
+  jenkins_data:
