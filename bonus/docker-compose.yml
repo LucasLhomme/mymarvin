@@ -3,17 +3,18 @@ services:
     build:
       context: ..
       dockerfile: bonus/Dockerfile
+    user: "0:0"
     container_name: my_marvin
     ports:
       - "3333:8080"
       - "50000:50000"
-    environment:
-      - USER_CHOCOLATEEN_PASSWORD=chocolateen_pwd
-      - USER_VAUGIE_G_PASSWORD=vaugie_g_pwd
-      - USER_I_DONT_KNOW_PASSWORD=i_dont_know_pwd
-      - USER_NASSO_PASSWORD=nasso_pwd
+    env_file:
+      - .env
     volumes:
       - jenkins_data:/var/jenkins_home
+      - ../my_marvin.yml:/var/jenkins_home/casc_configs/my_marvin.yml:ro
+      - ./my_bonus.yml:/var/jenkins_home/casc_configs/my_bonus.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock
 
 volumes:
   jenkins_data:

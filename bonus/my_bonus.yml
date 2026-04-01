@@ -1,0 +1,94 @@
+jobs:
+  - script: |
+      pipelineJob('coding-style-checker') {
+          parameters {
+              stringParam('REPOSITORY_URL', 'git@github.com:owner/repository.git', 'Git repository SSH URL')
+              stringParam('BRANCH', 'main', 'Branch to test')
+              stringParam('SSH_CREDENTIALS_ID', 'SSH', 'Jenkins SSH private key credential ID (create it in Jenkins Credentials first)')
+          }
+          definition {
+              cps {
+                  script('''
+                  pipeline {
+                      agent any
+
+                      stages {
+                          stage('Checkout') {
+                              steps {
+                                  deleteDir()
+                                  script {
+                                      if (!params.SSH_CREDENTIALS_ID?.trim()) {
+                                          error 'SSH_CREDENTIALS_ID parameter is missing or empty. Create an SSH private key credential in Jenkins and pass its ID.'
+                                      }
+                                  }
+
+                                  withCredentials([sshUserPrivateKey(credentialsId: params.SSH_CREDENTIALS_ID, keyFileVariable: 'SSH_KEY')]) {
+                                      script {
+                                          if (!params.REPOSITORY_URL?.trim()) {
+                                              error 'REPOSITORY_URL parameter is missing or empty.'
+                                          }
+                                          if (!params.BRANCH?.trim()) {
+                                              error 'BRANCH parameter is missing or empty.'
+                                          }
+
+                                          withEnv(["GIT_SSH_COMMAND=ssh -i \\$SSH_KEY -o IdentitiesOnly=yes -o StrictHostKeyChecking=accept-new"]) {
+                                              sh 'git clone --branch "$BRANCH" "$REPOSITORY_URL" .'
+                                          }
+                                      }
+                                  }
+                              }
+                          }
+
+                          stage('Epitech Coding Style') {
+                              steps {
+                                  script {
+                                      def projectName = params.REPOSITORY_URL.tokenize('/').last().replace('.git', '')
+                                      currentBuild.displayName = '#' + env.BUILD_NUMBER + ' - ' + projectName
+                                      currentBuild.description = 'Branch: ' + params.BRANCH
+                                      def errorCount = 0
+
+                                      if (fileExists('bonus/lambdananas')) {
+                                          sh 'chmod +x bonus/lambdananas'
+                                          sh './bonus/lambdananas . > haskell-reports.log 2>&1 || true'
+
+                                          if (fileExists('haskell-reports.log')) {
+                                              def hsLog = readFile('haskell-reports.log').trim()
+                                              echo 'HASKELL REPORT:\\n' + hsLog
+                                              if (hsLog && (hsLog.toLowerCase().contains('error') || hsLog.contains('major') || hsLog.contains('minor'))) {
+                                                  errorCount += 1
+                                              }
+                                          }
+                                      }
+
+                                      sh 'rm -f coding-style-reports.log'
+                                      sh 'docker run --rm -v "$(pwd)":/mnt -v "$(pwd)":/reports ghcr.io/epitech/coding-style-checker:latest /mnt /reports'
+
+                                      if (fileExists('coding-style-reports.log')) {
+                                          def cLog = readFile('coding-style-reports.log').trim()
+                                          if (cLog) {
+                                              echo 'C REPORT:\\n' + cLog
+                                              errorCount += cLog.split('\\n').size()
+                                          }
+                                      }
+
+                                      if (errorCount > 0) {
+                                          error('FAILURE: ' + errorCount + ' coding style issue(s) detected in total.')
+                                      } else {
+                                          echo 'SUCCESS: The code follows Epitech coding style rules.'
+                                      }
+                                  }
+                              }
+                          }
+                      }
+
+                      post {
+                          always {
+                              archiveArtifacts artifacts: 'coding-style-reports.log, haskell-reports.log', allowEmptyArchive: true
+                          }
+                      }
+                  }
+                  ''')
+                  sandbox()
+              }
+          }
+      }
