@@ -59,4 +59,4 @@ jenkins:
               - user: "nasso"
 
 jobs:
-  - file: /usr/local/jenkins/job_dsl.groovy
+  - file: job_dsl.groovy
