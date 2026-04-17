@@ -19,7 +19,7 @@ job('Tools/clone-repository') {
 job('Tools/SEED') {
     description('Generate a new job from parameters (GitHub repo and display name)')
     parameters {
-        stringParam('GITHUB_NAME', '', "GitHub repository owner/repo_name (e.g.: "EpitechIT31000/chocolatine")")
+        stringParam('GITHUB_NAME', '', "GitHub repository owner/repo_name (e.g.: 'EpitechIT31000/chocolatine')")
         stringParam('DISPLAY_NAME', '', 'Display name for the job')
     }
     steps {
