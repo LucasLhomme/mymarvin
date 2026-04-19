@@ -22,14 +22,10 @@ RUN jenkins-plugin-cli --plugins \
 
 RUN mkdir -p /var/jenkins_home/casc_configs
 
-COPY my_marvin.yml /var/jenkins_home/casc_configs/my_marvin.yml
-COPY bonus/my_bonus.yml /var/jenkins_home/casc_configs/my_bonus.yml
 COPY bonus/lambdananas /usr/local/bin/lambdananas
-
-COPY job_dsl.groovy /var/jenkins_home/job_dsl.groovy
 
 USER root
 RUN apt-get update && apt-get install -y make gcc git docker.io && rm -rf /var/lib/apt/lists/*
 RUN chmod +x /usr/local/bin/lambdananas
-RUN chown -R jenkins:jenkins /var/jenkins_home/casc_configs /var/jenkins_home/job_dsl.groovy
+RUN chown -R jenkins:jenkins /var/jenkins_home
 USER jenkins
